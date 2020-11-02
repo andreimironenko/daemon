@@ -13,8 +13,13 @@ namespace daemon {
     std::unique_ptr<core_> _impl;
 
     public:
-        core(std::string name);
-        ~core() = default;
+        explicit core(std::string name);
+
+        virtual ~core() = default;
+        core(core&&) = delete;
+        core(const core&) = delete;
+        core& operator=(core&&) = delete;
+        core& operator=(const core&) = delete;
         void start();
         void stop();
         void restart();

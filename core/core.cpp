@@ -5,6 +5,7 @@
 #include "../include/daemon.h"
 #include <iostream>
 #include <sstream>
+#include <array>
 
 // Linux headers
 #include <mqueue.h>
@@ -41,37 +42,54 @@ namespace daemon
         std::string _mq_name;
         struct mq_attr _mq_attr;
         mqd_t _mq_desc;
+        std::array<char, MQ_MAX_MSG_SIZE> _mq_buffer = {};
+        int _stop_flag = 0;
 
     public:
-        core_(std::string name) :
-        _name(name),
-        _mq_name("/mq_" + _name),
-        _mq_attr{MQ_FLAGS, MQ_MAX_MSG_COUNT, MQ_MAX_MSG_SIZE,0},
-        _mq_desc(mq_open(_mq_name.c_str(), MQ_FLAGS, MQ_PERMS,&_mq_attr))
-        {
-            if (_mq_desc == static_cast<mqd_t>(-1))
-            {
-                stringstream ss;
-                ss << "Creation of ";
-                ss << _name;
-                ss << " daemon's message queue has failed";
-
-                throw std::runtime_error(ss.str());
-            }
-        }
+        explicit core_(std::string name);
         virtual ~core_() = default;
 
-        void start() {
-            cout << "daemon started" << endl;
-        }
-        void stop() {cout << "daemon stopped" << endl;}
-        void restart() {cout << "daemon restarted" << endl;}
-        std::string status() { return std::string("");}
+        void start();
+        void stop();
+        void restart();
+        std::string status();
     };
+
+
+
+    core::core_::core_(std::string name) :
+            _name(name),
+            _mq_name("/mq_" + _name),
+            _mq_attr{MQ_FLAGS, MQ_MAX_MSG_COUNT, MQ_MAX_MSG_SIZE,0},
+            _mq_desc(mq_open(_mq_name.c_str(), MQ_FLAGS, MQ_PERMS,&_mq_attr))
+    {
+        if (_mq_desc == static_cast<mqd_t>(-1))
+        {
+            stringstream ss;
+            ss << "Creation of ";
+            ss << _name;
+            ss << " daemon's message queue has failed";
+
+            throw std::runtime_error(ss.str());
+        }
+        start();
+    }
+
+    void core::core_::start() {
+        cout << "daemon started" << endl;
+        while(!_stop_flag) {
+           auto nm_read = mq_receive(_mq_desc, _mq_buffer.data(), MQ_MAX_MSG_SIZE, 0);
+
+        }
+    }
+    void core::core_::stop() {cout << "daemon stopped" << endl;}
+    void core::core_::restart() {cout << "daemon restarted" << endl;}
+    std::string core::core_::status() { return std::string("");}
 
     core::core(std::string name) : _impl(std::make_unique<core_>(name)) {}
     void core::start() {_impl->start();}
     void core::stop() {_impl->stop();}
     void core::restart() {_impl->restart();}
     std::string core::status() {return _impl->status();}
-}
+} // namespace daemon
+
