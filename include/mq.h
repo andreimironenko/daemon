@@ -5,30 +5,34 @@
 
 #include <array>
 #include <memory>
+#include <string_view>
 
 // Linux headers
+extern "C" {
 #include <mqueue.h>
 #include <fcntl.h>
-
+}
 
 class mq {
 
     // Forward implementation class declaration
     class mq_;
 
+//typedef struct mq_attr mq_attr_t;
+
     // Type declarations
-    using attr_ptr = std::unique_ptr<struct mq_attr>;
+    using attr_ptr_t = std::unique_ptr<mq_attr>;
 
 // PRIVATE INSTANCE VARIABLES
     // Implementation class pointer
-    std::unique_ptr<mq_> _mq;
+    std::unique_ptr <mq_> _mq;
 
 public:
     // PUBLIC STATIC MEMBERS
 #if defined (MQ_MAX_MSG_COUNT)
     static const long MAX_MSG_COUNT = MQ_MAX_MSG_COUNT;
 #else
-    static const long MAX_MSG_COUNT= 100;
+    static const long MAX_MSG_COUNT = 100;
 #endif
 
 #if defined (MQ_MAX_MSG_SIZE)
@@ -36,7 +40,9 @@ public:
 #else
     static const long MAX_MSG_SIZE = 2048;
 #endif
-    static void unlink(std::string name);
+
+    static int unlink(const std::string &queue);
+
 
     // PUBLIC INSTANCE MEMBERS
     /**!
@@ -53,23 +59,33 @@ public:
     **/
 
     //struct mq_attr attr = {0, MAX_MSG_COUNT, MAX_MSG_SIZE,0,}
-    mq(std::string name,
-       int oflag = O_CREAT | O_EXCL,
-       mode_t mode = 0700,
-       attr_ptr attr =
-               std::make_unique<struct mq_attr>(0, MAX_MSG_COUNT, MAX_MSG_SIZE, 0)
+    explicit mq(const std::string &name,
+                int oflag = O_CREAT | O_EXCL,
+                mode_t mode = 0700,
+                attr_ptr_t attr =
+                //std::make_unique<mq_attr_t>(0, MAX_MSG_COUNT, MAX_MSG_SIZE, 0)
+                std::make_unique<mq_attr>()
     );
-    ~mq();
-    mq(mq&&) = delete;
-    mq(const mq&) = delete;
-    mq& operator=(mq&&) = delete;
-    mq& operator=(const mq&) = delete;
+
+    ~mq() = default;
+
+    mq(mq &&) = delete;
+
+    mq(const mq &) = delete;
+
+    mq &operator=(mq &&) = delete;
+
+    mq &operator=(const mq &) = delete;
 
 
-    attr_ptr get_attr();
-    void set_attr(attr_ptr attr);
-    void send();
-    void receive();
+    [[nodiscard]] attr_ptr_t get_attr() const;
+
+    void set_attr(attr_ptr_t attr);
+
+    void send(std::string_view msg, unsigned int priority = 0);
+
+    ssize_t receive(std::string_view &msg, unsigned int &priority);
+
+    // TODO: implement mq_teimedsend, mq_timedrecive and mq_notify
 };
-
 

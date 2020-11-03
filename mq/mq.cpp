@@ -8,32 +8,29 @@
 class mq::mq_{
 
     // PRIVATE INSTANCE VARIABLES
-    std::string _name; //daemon process name or maybe file name argv[0]?
-    attr_ptr _attr;
+    std::string _name;
     mqd_t _desc;
-    std::array<char, mq::MAX_MSG_SIZE> _buffer = {};
-    int _stop_flag = 0;
 
 public:
     // PUBLIC INSTANCE MEMBERS
-    mq_(std::string name, int oflag, mode_t mode, attr_ptr attr);
-    ~mq_() = default;
+    explicit mq_(const std::string &name, int oflag, mode_t mode, attr_ptr_t attr);
+    ~mq_();
     mq_(mq_&&) = delete;
     mq_(const mq_&) = delete;
     mq_& operator=(mq_&&) = delete;
     mq_& operator=(const mq&) = delete;
 
-    attr_ptr get_attr();
-    void set_attr(attr_ptr attr);
-    void send();
-    void receive();
+    [[nodiscard]] attr_ptr_t get_attr() const;
+    void set_attr(attr_ptr_t attr_ptr);
+    void send(std::string_view msg, unsigned int priority=0);
+    ssize_t receive(std::string_view& msg, unsigned int &priority);
 };
 
 
-mq::mq_::mq_(std::string name, int oflag, mode_t mode, mq::attr_ptr attr):
+
+mq::mq_::mq_(const std::string &name, int oflag, mode_t mode, mq::attr_ptr_t attr):
         _name(name),
-        _attr(std::move(attr)),
-        _desc(mq_open(_name.c_str(), oflag, mode ,&_attr))
+        _desc(mq_open(_name.c_str(), oflag, mode , attr.get()))
 {
     if (_desc == static_cast<mqd_t>(-1))
     {
@@ -46,42 +43,79 @@ mq::mq_::mq_(std::string name, int oflag, mode_t mode, mq::attr_ptr attr):
     }
 }
 
-mq::attr_ptr mq::mq_::get_attr() {
-    return mq::attr_ptr();
+mq::mq_::~mq_() {
+    mq_close(_desc);
 }
 
-void mq::mq_::set_attr(mq::attr_ptr attr) {
+mq::attr_ptr_t mq::mq_::get_attr() const {
+    int ret = -1;
+    mq::attr_ptr_t attr = std::make_unique<struct mq_attr>();
+    if(0 != (ret = mq_getattr(_desc, attr.get() )))
+    {
+        std::stringstream ss;
+        ss << "Call of mq_getattr has failed, returning ";
+        ss << ret;
+        throw std::runtime_error(ss.str());
+    }
+    return attr;
+}
+
+void mq::mq_::set_attr(mq::attr_ptr_t attr) {
+    int ret = -1;
+    mq::attr_ptr_t old_attr = std::make_unique<struct mq_attr>();
+    if(0 != (ret = mq_setattr(_desc, attr.get(), old_attr.get() )))
+    {
+        std::stringstream ss;
+        ss << "Call of mq_setattr has failed, returning ";
+        ss << ret;
+        throw std::runtime_error(ss.str());
+    }
+}
+
+void mq::mq_::send(std::string_view msg, unsigned int priority) {
+    int ret = -1;
+    if (0 != (ret = mq_send(_desc, msg.data(), msg.size(), priority)))
+    {
+        std::stringstream ss;
+        ss << "Call of mq_send has failed, returning ";
+        ss << ret;
+        throw std::runtime_error(ss.str());
+    }
+}
+
+ssize_t mq::mq_::receive(std::string_view &msg, unsigned int &priority) {
+    ssize_t count = 0;
+    if (-1 == (count = mq_receive(_desc, const_cast<char*>(msg.data()), msg.max_size(), &priority)))
+    {
+        std::stringstream ss;
+        ss << "Call of mq_receive has failed";
+        throw std::runtime_error(ss.str());
+    }
+    return count;
+}
+
+
+mq::mq(const std::string &name, int oflag, mode_t mode, mq::attr_ptr_t attr):
+_mq(std::make_unique<mq::mq_>(name, oflag, mode, std::move(attr)))
+{}
+
+mq::attr_ptr_t mq::get_attr() const{
+    return _mq->get_attr();
+}
+
+void mq::set_attr(mq::attr_ptr_t attr) {
+    _mq->set_attr(std::move(attr));
+}
+
+void mq::send(std::string_view msg, unsigned int priority) {
+    _mq->send(msg, priority);
 
 }
 
-void mq::mq_::send() {
-
+ssize_t mq::receive(std::string_view& msg, unsigned int &priority) {
+    return _mq->receive(msg, priority);
 }
 
-void mq::mq_::receive() {
-
+int mq::unlink(const std::string& queue) {
+    return mq_unlink(queue.c_str());
 }
-
-mq::mq(const std::string name, int oflag, mode_t mode, mq::attr_ptr attr) {
-
-}
-
-mq::attr_ptr mq::get_attr() {
-}
-
-void mq::set_attr(mq::attr_ptr attr) {
-
-}
-
-void mq::send() {
-
-}
-
-void mq::receive() {
-
-}
-
-void mq::unlink(std::string name) {
-
-}
-
