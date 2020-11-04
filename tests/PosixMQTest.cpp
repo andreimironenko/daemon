@@ -22,7 +22,7 @@ public:
 
     void SetUp( ) {
         // initialization or some code to run before each test
-        mq::unlink(_mq_name.c_str());
+        mq::unlink(_mq_name);
     }
 
     void TearDown( ) {
@@ -33,7 +33,7 @@ public:
 
     ~myTestFixture( )  {
         //resources cleanup, no exceptions allowed
-        mq::unlink(_mq_name.c_str());
+        mq::unlink(_mq_name);
     }
 
     // shared user data
