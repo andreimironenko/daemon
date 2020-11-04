@@ -16,7 +16,7 @@ public:
     explicit mq_(const std::string &name, int oflag, mode_t mode, attr_ptr_t attr);
     ~mq_();
     mq_(mq_&&) = delete;
-    mq_(const mq_&) = delete;
+    mq_(const mq_&) = default;
     mq_& operator=(mq_&&) = delete;
     mq_& operator=(const mq&) = delete;
 
@@ -96,7 +96,7 @@ ssize_t mq::mq_::receive(std::string_view &msg, unsigned int &priority) {
 
 
 mq::mq(const std::string &name, int oflag, mode_t mode, mq::attr_ptr_t attr):
-_mq(std::make_unique<mq::mq_>(name, oflag, mode, std::move(attr)))
+_mq(new mq::mq_(name, oflag, mode, std::move(attr)))
 {}
 
 mq::attr_ptr_t mq::get_attr() const{
@@ -119,3 +119,11 @@ ssize_t mq::receive(std::string_view& msg, unsigned int &priority) {
 int mq::unlink(const std::string& queue) {
     return mq_unlink(queue.c_str());
 }
+
+mq::mq(const mq &other):
+_mq(new mq::mq_(*other._mq)) {
+}
+
+mq::~mq() {
+}
+

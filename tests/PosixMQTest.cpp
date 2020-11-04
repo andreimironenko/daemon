@@ -2,17 +2,27 @@
 // Created by amironenko on 03/11/2020.
 //
 #include "gtest/gtest.h"
+#include "mq.h"
+
+#include <memory>
+#include <string>
 
 class myTestFixture: public ::testing::Test {
+protected:
+    std::string _mq_name;
+    std::unique_ptr<mq> _mq;
 
 public:
-    myTestFixture( ) {
+    myTestFixture()
+    : _mq_name("/mq_test")
+    {
+        //mq mq_obj("/mymq");
         // initialization;
-        // can also be done in SetUp()
     }
 
     void SetUp( ) {
         // initialization or some code to run before each test
+        mq::unlink(_mq_name.c_str());
     }
 
     void TearDown( ) {
@@ -23,11 +33,15 @@ public:
 
     ~myTestFixture( )  {
         //resources cleanup, no exceptions allowed
+        mq::unlink(_mq_name.c_str());
     }
 
     // shared user data
 };
 
 TEST_F(myTestFixture, FirstTest) {
-
+    _mq = std::make_unique<mq>(_mq_name.c_str());
+    mq::attr_ptr_t attr(_mq->get_attr());
+    EXPECT_EQ(attr->mq_maxmsg, 100);
+    EXPECT_EQ(attr->mq_msgsize, 2048);
 }

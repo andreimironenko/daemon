@@ -34,5 +34,5 @@ endif()
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
 add_executable(Google_Tests_run PosixMQTest.cpp)
-target_link_libraries(Google_Tests_run mq)
+target_link_libraries(Google_Tests_run mq rt)
 target_link_libraries(Google_Tests_run gtest gtest_main)
