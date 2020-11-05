@@ -33,6 +33,6 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
 endif()
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
-add_executable(Google_Tests_run PosixMQTest.cpp)
-target_link_libraries(Google_Tests_run mq rt)
-target_link_libraries(Google_Tests_run gtest gtest_main)
+add_executable(tests PosixMQTest.cpp)
+target_link_libraries(tests mq rt)
+target_link_libraries(tests gtest gtest_main)

@@ -7,41 +7,89 @@
 #include <memory>
 #include <string>
 
-class myTestFixture: public ::testing::Test {
+class PosixMQTest: public ::testing::Test {
 protected:
     std::string _mq_name;
-    std::unique_ptr<mq> _mq;
 
 public:
-    myTestFixture()
+    PosixMQTest()
     : _mq_name("/mq_test")
     {
         //mq mq_obj("/mymq");
         // initialization;
     }
 
-    void SetUp( ) {
+    void SetUp( ) override {
         // initialization or some code to run before each test
         mq::unlink(_mq_name);
     }
 
-    void TearDown( ) {
+    void TearDown( ) override {
         // code to run after each test;
         // can be used instead of a destructor,
         // but exceptions can be handled in this function only
     }
 
-    ~myTestFixture( )  {
+    ~PosixMQTest( )  override {
         //resources cleanup, no exceptions allowed
         mq::unlink(_mq_name);
     }
 
-    // shared user data
+    // shared user datad
 };
 
-TEST_F(myTestFixture, FirstTest) {
-    _mq = std::make_unique<mq>(_mq_name.c_str());
-    mq::attr_ptr_t attr(_mq->get_attr());
+TEST_F(PosixMQTest, CreateExclusiveMQ ) {
+    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name);
+    mq::attr_uqp_t attr(mqd->get_attr());
     EXPECT_EQ(attr->mq_maxmsg, 100);
     EXPECT_EQ(attr->mq_msgsize, 2048);
 }
+
+TEST_F(PosixMQTest, OpenExistingMQ ) {
+    std::unique_ptr<mq> mqd_excl = std::make_unique<mq>(_mq_name);
+    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
+    mq::attr_uqp_t attr(mqd->get_attr());
+    EXPECT_EQ(attr->mq_maxmsg, 100);
+    EXPECT_EQ(attr->mq_msgsize, 2048);
+}
+
+TEST_F(PosixMQTest, ExistingMQChangeAttr) {
+    std::unique_ptr<mq> mqd_excl = std::make_unique<mq>(_mq_name);
+    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
+    mq::attr_uqp_t attr(mqd->get_attr());
+    EXPECT_EQ(attr->mq_maxmsg, 100);
+    EXPECT_EQ(attr->mq_msgsize, 2048);
+    mq::attr_shp_t new_attr_sp = std::move(attr);
+    new_attr_sp->mq_msgsize = 50;
+    mq::attr_uqp_t prev_attr(mqd->set_attr(new_attr_sp));
+}
+
+TEST_F(PosixMQTest, OpenExistingMQNullAttr ) {
+    std::unique_ptr<mq> mqd_excl = std::make_unique<mq>(_mq_name);
+    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR, 0700);
+    mq::attr_uqp_t attr(mqd->get_attr());
+    EXPECT_EQ(attr->mq_maxmsg, 100);
+    EXPECT_EQ(attr->mq_msgsize, 2048);
+}
+
+TEST_F(PosixMQTest, MQSendReceive ) {
+    std::unique_ptr<mq> mqd_recv = std::make_unique<mq>(_mq_name);
+    std::unique_ptr<mq> mqd_send = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
+    auto hello = "Hello";
+    auto msg_size = strlen(hello);
+    EXPECT_EQ(msg_size, 5);
+    auto msg = std::make_shared<char[]>(msg_size);
+    memcpy((void*) msg.get(), (void *) hello, msg_size);
+
+    mqd_send->send(msg, 0);
+
+    // receiving message
+    auto received_msg = std::make_shared<char[]>(msg_size);
+    auto priority = std::make_shared<unsigned int>(0);
+    auto received_bytes = mqd_recv->receive(received_msg, priority);
+
+    EXPECT_EQ(*priority, 0);
+    EXPECT_EQ(received_bytes, msg_size);
+    EXPECT_TRUE(0 == memcmp(msg.get(), received_msg.get(), msg_size));
+}
+
