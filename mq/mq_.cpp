@@ -72,7 +72,7 @@ mq::attr_uqp_t mq::mq_::set_attr(mq::attr_wkp_t attr) {
 
     attr_uqp_t prev_attr = std::make_unique<mq_attr>();
 
-    if (0 != (ret = mq_setattr(_desc, attr_sp.get(), prev_attr.get() )))
+    if (ret = mq_setattr(_desc, attr_sp.get(), prev_attr.get()); ret != 0)
     {
         std::stringstream ss;
         ss << "Call of mq_setattr has failed, returning ";

@@ -17,12 +17,6 @@ mq::mq(std::string name, mq::attr_wkp_t attr, int oflag, mode_t mode):
         _mq(new mq::mq_(name, std::move(attr), oflag, mode))
 {}
 
-#if 0
-mq::mq(const mq &other):
-        _mq(new mq::mq_(*other._mq)) {
-}
-#endif
-
 mq::~mq() {}
 
 mq::attr_uqp_t mq::get_attr() const{

@@ -28,6 +28,7 @@ public:
         // code to run after each test;
         // can be used instead of a destructor,
         // but exceptions can be handled in this function only
+        mq::unlink(_mq_name);
     }
 
     ~PosixMQTest( )  override {
@@ -39,29 +40,33 @@ public:
 };
 
 TEST_F(PosixMQTest, CreateExclusiveMQ ) {
-    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name);
+    auto mqd = std::make_unique<mq>(_mq_name);
     mq::attr_uqp_t attr(mqd->get_attr());
     EXPECT_EQ(attr->mq_maxmsg, 100);
     EXPECT_EQ(attr->mq_msgsize, 2048);
 }
 
-TEST_F(PosixMQTest, OpenExistingMQ ) {
-    std::unique_ptr<mq> mqd_excl = std::make_unique<mq>(_mq_name);
-    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
-    mq::attr_uqp_t attr(mqd->get_attr());
-    EXPECT_EQ(attr->mq_maxmsg, 100);
-    EXPECT_EQ(attr->mq_msgsize, 2048);
+TEST_F(PosixMQTest, CreateExclusiveMQCustAttr ) {
+    auto attr = std::make_shared<mq_attr>();
+    attr->mq_flags = 0;
+    attr->mq_msgsize = 1024;
+    attr->mq_maxmsg = 100;
+    auto mqd = std::make_unique<mq>(_mq_name, attr);
+    auto attr_retrieved{mqd->get_attr()};
+    EXPECT_EQ(attr_retrieved->mq_maxmsg, 100);
+    EXPECT_EQ(attr_retrieved->mq_msgsize, 1024);
 }
 
 TEST_F(PosixMQTest, ExistingMQChangeAttr) {
     std::unique_ptr<mq> mqd_excl = std::make_unique<mq>(_mq_name);
-    std::unique_ptr<mq> mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
-    mq::attr_uqp_t attr(mqd->get_attr());
-    EXPECT_EQ(attr->mq_maxmsg, 100);
-    EXPECT_EQ(attr->mq_msgsize, 2048);
-    mq::attr_shp_t new_attr_sp = std::move(attr);
-    new_attr_sp->mq_msgsize = 50;
-    mq::attr_uqp_t prev_attr(mqd->set_attr(new_attr_sp));
+    auto mqd = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
+    auto attr(mqd->get_attr());
+    auto new_attr = std::shared_ptr<mq_attr>(std::move(attr));
+    new_attr->mq_flags |= O_NONBLOCK;
+    auto prev_attr = mqd->set_attr(new_attr);
+    auto curr_attr = mqd->get_attr();
+    EXPECT_TRUE(!(prev_attr->mq_flags & O_NONBLOCK));
+    EXPECT_TRUE(curr_attr->mq_flags & O_NONBLOCK);
 }
 
 TEST_F(PosixMQTest, OpenExistingMQNullAttr ) {
