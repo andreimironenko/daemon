@@ -50,7 +50,6 @@ public:
 
     static int unlink(std::string queue);
 
-
     // PUBLIC INSTANCE MEMBERS
     /**!
      * Message queue Ctor, only required parameter is the name, by default it will create an exclusive message queue
@@ -75,7 +74,7 @@ public:
     mq(
             std::string name,
             attr_uqp_t attr = std::unique_ptr<mq_attr>(new mq_attr{0, MAX_MSG_COUNT, MAX_MSG_SIZE, 0}),
-            int oflag = O_CREAT | O_EXCL | O_RDWR,
+            int oflag = O_CREAT | O_EXCL,
             mode_t mode = 0700
     );
 
@@ -99,4 +98,3 @@ public:
 
     // TODO: implement mq_timedsend, mq_timedrecive and mq_notify
 };
-

@@ -10,8 +10,8 @@
 mq::mq_::mq_(std::string name, attr_uqp_t attr, int oflag, mode_t mode) :
         _name(name),
         _desc(mq_open(_name.c_str(), oflag, mode , attr.get())),
-        _recv_buffer_size(attr ? attr->mq_msgsize: 2048),
-        _recv_buffer(std::make_shared<char[]>(_recv_buffer_size))
+        _recv_size(attr ? attr->mq_msgsize : mq::MAX_MSG_SIZE),
+        _recv_buffer(std::make_shared<char[]>(_recv_size))
 {
     if (_desc == static_cast<mqd_t>(-1))
     {
@@ -38,8 +38,8 @@ mq::mq_::mq_(std::string name, attr_wkp_t attr, int oflag, mode_t mode) :
 
         throw std::runtime_error(ss.str());
     }
-    _recv_buffer_size = sp ? sp->mq_msgsize: 2048;
-    _recv_buffer = std::make_shared<char[]>(_recv_buffer_size);
+    _recv_size = sp ? sp->mq_msgsize : mq::MAX_MSG_SIZE;
+    _recv_buffer = std::make_shared<char[]>(_recv_size);
 }
 
 
@@ -48,9 +48,8 @@ mq::mq_::~mq_() {
 }
 
 mq::attr_uqp_t mq::mq_::get_attr() const {
-    int ret = -1;
     mq::attr_uqp_t attr = std::make_unique<struct mq_attr>();
-    if (0 != (ret = mq_getattr(_desc, attr.get() )))
+    if (int ret = (ret = mq_getattr(_desc, attr.get() )); ret != 0)
     {
         std::stringstream ss;
         ss << "Call of mq_getattr has failed, returning ";
@@ -60,19 +59,18 @@ mq::attr_uqp_t mq::mq_::get_attr() const {
     return attr;
 }
 
-mq::attr_uqp_t mq::mq_::set_attr(mq::attr_wkp_t attr) {
-    int ret = -1;
-    auto attr_sp = attr.lock();
-    if (!attr_sp) {
+mq::attr_uqp_t mq::mq_::set_attr(mq::attr_wkp_t attr_orig) {
+
+    auto attr = attr_orig.lock();
+    if (!attr) {
         std::stringstream ss;
         ss << "The nullptr is passed as a parameter to set_attr function";
-        ss << ret;
         throw std::runtime_error(ss.str());
     }
 
     attr_uqp_t prev_attr = std::make_unique<mq_attr>();
 
-    if (ret = mq_setattr(_desc, attr_sp.get(), prev_attr.get()); ret != 0)
+    if (int ret = mq_setattr(_desc, attr.get(), prev_attr.get()); ret != 0)
     {
         std::stringstream ss;
         ss << "Call of mq_setattr has failed, returning ";
@@ -85,39 +83,35 @@ mq::attr_uqp_t mq::mq_::set_attr(mq::attr_wkp_t attr) {
 
 void mq::mq_::send(msg_t msg) {
 
-    auto buff_sp = msg.ptr.lock();
+    auto buff = msg.ptr.lock();
 
-    if (!buff_sp) {
+    if (!buff) {
         std::stringstream ss;
         ss << "The buffer pointer is null passed in msg_t";
         throw std::runtime_error(ss.str());
     }
 
-    if (0 != mq_send(_desc, buff_sp.get(), msg.size, msg.priority)) {
+    if (int ret = mq_send(_desc, buff.get(), msg.size, msg.priority); ret != 0) {
         std::stringstream ss;
         ss << "Call of mq_send has failed,";
         ss << "size = " << msg.size << "bytes, ";
-        ss << "message: " << buff_sp.get();
+        ss << "message: " << buff.get();
         throw std::runtime_error(ss.str());
     }
 }
 
 
 mq::msg_t mq::mq_::receive() {
-    ssize_t ret = -1;
     mq::msg_t msg{_recv_buffer, 0, 0};
 
-    msg.size = mq_receive(_desc, _recv_buffer.get(), _recv_buffer_size, &msg.priority);
+    msg.size = mq_receive(_desc, _recv_buffer.get(), _recv_size, &msg.priority);
     if(-1 == msg.size) {
         std::stringstream ss;
         ss << "Call of mq_receive has failed, ";
-        ss << "max message size: " << sizeof(_recv_buffer.get()) << ", ";
+        ss << "max message size: " << _recv_size << ", ";
         ss << "priority = " << msg.priority;
         throw std::runtime_error(ss.str());
     }
 
     return msg;
 }
-
-
-

@@ -9,7 +9,7 @@ class mq::mq_{
     // PRIVATE INSTANCE VARIABLES
     std::string _name;
     mqd_t _desc;
-    ssize_t _recv_buffer_size;
+    ssize_t _recv_size;
     std::shared_ptr<char[]> _recv_buffer;
 
 public:

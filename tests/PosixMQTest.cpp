@@ -39,6 +39,7 @@ public:
     // shared user datad
 };
 
+// Creating exclusive message queue with default flags which O_CREAT|O_EXCL
 TEST_F(PosixMQTest, CreateExclusiveMQ ) {
     auto mqd = std::make_unique<mq>(_mq_name);
     mq::attr_uqp_t attr(mqd->get_attr());
@@ -46,12 +47,13 @@ TEST_F(PosixMQTest, CreateExclusiveMQ ) {
     EXPECT_EQ(attr->mq_msgsize, 2048);
 }
 
+
 TEST_F(PosixMQTest, CreateExclusiveMQCustAttr ) {
     auto attr = std::make_shared<mq_attr>();
     attr->mq_flags = 0;
     attr->mq_msgsize = 1024;
     attr->mq_maxmsg = 100;
-    auto mqd = std::make_unique<mq>(_mq_name, attr);
+    auto mqd = std::make_unique<mq>(_mq_name, attr, O_CREAT|O_EXCL, 0744);
     auto attr_retrieved{mqd->get_attr()};
     EXPECT_EQ(attr_retrieved->mq_maxmsg, 100);
     EXPECT_EQ(attr_retrieved->mq_msgsize, 1024);
