@@ -9,6 +9,8 @@ class mq::mq_{
     // PRIVATE INSTANCE VARIABLES
     std::string _name;
     mqd_t _desc;
+    ssize_t _recv_buffer_size;
+    std::shared_ptr<char[]> _recv_buffer;
 
 public:
     // PUBLIC INSTANCE MEMBERS
@@ -16,16 +18,15 @@ public:
     explicit mq_(std::string name, attr_wkp_t attr, int oflag, mode_t mode);
     ~mq_();
     mq_(mq_&&) = delete;
-    mq_(const mq_&) = default;
+    mq_(const mq_&) = delete;
     mq_& operator=(mq_&&) = delete;
     mq_& operator=(const mq&) = delete;
 
     [[nodiscard]] attr_uqp_t get_attr() const;
     attr_uqp_t set_attr(attr_wkp_t attr_ptr);
 
-    void send(std::weak_ptr<char[]> msg, unsigned int priority = 0);
-    ssize_t  receive(std::weak_ptr<char[]> msg, std::weak_ptr<unsigned int> priority);
-
+    void send(msg_t msg);
+    mq::msg_t  receive();
 };
 
 

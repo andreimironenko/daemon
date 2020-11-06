@@ -17,9 +17,11 @@ mq::mq(std::string name, mq::attr_wkp_t attr, int oflag, mode_t mode):
         _mq(new mq::mq_(name, std::move(attr), oflag, mode))
 {}
 
+#if 0
 mq::mq(const mq &other):
         _mq(new mq::mq_(*other._mq)) {
 }
+#endif
 
 mq::~mq() {}
 
@@ -31,12 +33,12 @@ mq::attr_uqp_t mq::set_attr(mq::attr_wkp_t attr) {
     return _mq->set_attr(std::move(attr));
 }
 
-void mq::send(std::weak_ptr<char[]> msg, unsigned int priority) {
-    _mq->send(std::move(msg), priority);
+void mq::send(msg_t msg) {
+    _mq->send(std::move(msg));
 }
 
-ssize_t  mq::receive(std::weak_ptr<char[]> msg, std::weak_ptr<unsigned int> priority) {
-    return _mq->receive(std::move(msg), std::move(priority));
+mq::msg_t  mq::receive() {
+    return _mq->receive();
 }
 
 int mq::unlink(std::string queue) {

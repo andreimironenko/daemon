@@ -76,21 +76,23 @@ TEST_F(PosixMQTest, MQSendReceive ) {
     std::unique_ptr<mq> mqd_recv = std::make_unique<mq>(_mq_name);
     std::unique_ptr<mq> mqd_send = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
     auto hello = "Hello";
-    //auto msg_size = strlen(hello);
-    auto msg_size = sizeof(hello);
-    EXPECT_EQ(msg_size, 8);
-    auto msg = std::make_shared<char[]>(msg_size);
-    memcpy((void*) msg.get(), (void *) hello, msg_size);
+    auto msg_size = strlen(hello);
+    EXPECT_EQ(msg_size, 5);
+    auto buff = std::make_shared<char []>(msg_size);
+    mq::msg_t msg;
+    msg.ptr = buff;
+    msg.size = msg_size;
+    msg.priority = 0;
 
-    mqd_send->send(msg, 0);
+    memcpy((void*) buff.get(), (void *)hello, msg.size);
+
+    mqd_send->send(msg);
 
     // receiving message
-    auto received_msg = std::make_shared<char[]>(msg_size);
-    auto priority = std::make_shared<unsigned int>(0);
-    auto received_bytes = mqd_recv->receive(received_msg, priority);
+    auto [received_msg, received_bytes, priority] = mqd_recv->receive();
 
-    EXPECT_EQ(*priority, 0);
+    EXPECT_EQ(priority, 0);
     EXPECT_EQ(received_bytes, msg_size);
-    EXPECT_TRUE(0 == memcmp(msg.get(), received_msg.get(), msg_size));
+    EXPECT_TRUE(0 == memcmp(buff.get(), received_msg.lock().get(), msg_size));
 }
 

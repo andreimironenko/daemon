@@ -9,7 +9,9 @@
 
 mq::mq_::mq_(std::string name, attr_uqp_t attr, int oflag, mode_t mode) :
         _name(name),
-        _desc(mq_open(_name.c_str(), oflag, mode , attr.get()))
+        _desc(mq_open(_name.c_str(), oflag, mode , attr.get())),
+        _recv_buffer_size(attr ? attr->mq_msgsize: 2048),
+        _recv_buffer(std::make_shared<char[]>(_recv_buffer_size))
 {
     if (_desc == static_cast<mqd_t>(-1))
     {
@@ -36,6 +38,8 @@ mq::mq_::mq_(std::string name, attr_wkp_t attr, int oflag, mode_t mode) :
 
         throw std::runtime_error(ss.str());
     }
+    _recv_buffer_size = sp ? sp->mq_msgsize: 2048;
+    _recv_buffer = std::make_shared<char[]>(_recv_buffer_size);
 }
 
 
@@ -79,53 +83,40 @@ mq::attr_uqp_t mq::mq_::set_attr(mq::attr_wkp_t attr) {
     return prev_attr;
 }
 
-void mq::mq_::send(std::weak_ptr<char[]> msg, unsigned int priority) {
-    auto msg_spt = msg.lock();
+void mq::mq_::send(msg_t msg) {
 
-    if (!msg_spt) {
+    auto buff_sp = msg.ptr.lock();
+
+    if (!buff_sp) {
         std::stringstream ss;
-        ss << "The nullptr is passed as a parameter to send function";
+        ss << "The buffer pointer is null passed in msg_t";
         throw std::runtime_error(ss.str());
     }
 
-    if (0 != mq_send(_desc, msg_spt.get(),sizeof(msg_spt.get()), priority)) {
+    if (0 != mq_send(_desc, buff_sp.get(), msg.size, msg.priority)) {
         std::stringstream ss;
         ss << "Call of mq_send has failed,";
-        ss << "size = " << (const char*)sizeof(msg_spt.get()) << "bytes, ";
-        ss << "message: " << msg_spt.get();
+        ss << "size = " << msg.size << "bytes, ";
+        ss << "message: " << buff_sp.get();
         throw std::runtime_error(ss.str());
     }
 }
 
 
-ssize_t mq::mq_::receive(std::weak_ptr<char[]> msg, std::weak_ptr<unsigned int> priority) {
+mq::msg_t mq::mq_::receive() {
     ssize_t ret = -1;
-    auto msg_spt = msg.lock();
+    mq::msg_t msg{_recv_buffer, 0, 0};
 
-    if(!msg_spt) {
-        std::stringstream ss;
-        ss << "The nullptr is passed as msg parameter to receive function";
-        throw std::runtime_error(ss.str());
-    }
-
-    auto priority_spt = priority.lock();
-
-    if(!priority_spt) {
-        std::stringstream ss;
-        ss << "The nullptr is passed as priority parameter to receive function";
-        throw std::runtime_error(ss.str());
-    }
-
-    //ret = mq_receive(_desc, msg_spt.get(), sizeof(msg_spt.get()) + 1, priority_spt.get());
-    ret = mq_receive(_desc, msg_spt.get(), 2048, priority_spt.get());
-    if(-1 == ret) {
+    msg.size = mq_receive(_desc, _recv_buffer.get(), _recv_buffer_size, &msg.priority);
+    if(-1 == msg.size) {
         std::stringstream ss;
         ss << "Call of mq_receive has failed, ";
-        ss << "max message size: " << sizeof(msg_spt.get()) << ", ";
-        ss << "priority = " << *priority_spt;
+        ss << "max message size: " << sizeof(_recv_buffer.get()) << ", ";
+        ss << "priority = " << msg.priority;
         throw std::runtime_error(ss.str());
     }
-    return ret;
+
+    return msg;
 }
 
 

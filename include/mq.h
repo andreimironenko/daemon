@@ -18,11 +18,18 @@ class mq {
     // Forward implementation class declaration
     class mq_;
 
-// PRIVATE INSTANCE VARIABLES
+
+    // PRIVATE INSTANCE VARIABLES
     // Implementation class pointer
     std::unique_ptr <mq_> _mq;
 
 public:
+    struct msg_t {
+        std::weak_ptr<char []> ptr;
+        ssize_t size;
+        unsigned int priority;
+    };
+
     // Type declarations
     using attr_uqp_t = std::unique_ptr<mq_attr>;
     using attr_shp_t = std::shared_ptr<mq_attr>;
@@ -76,7 +83,7 @@ public:
 
     mq(mq &&) = delete;
 
-    mq(const mq &other);
+    mq(const mq &other) = delete;
 
     mq &operator=(mq &&) = delete;
 
@@ -87,9 +94,8 @@ public:
 
     attr_uqp_t set_attr(attr_wkp_t attr);
 
-    void send(std::weak_ptr<char[]> msg, unsigned int priority = 0);
-
-    ssize_t  receive(std::weak_ptr<char[]> msg, std::weak_ptr<unsigned int> priority);
+    void send(msg_t msg);
+    msg_t  receive();
 
     // TODO: implement mq_timedsend, mq_timedrecive and mq_notify
 };
