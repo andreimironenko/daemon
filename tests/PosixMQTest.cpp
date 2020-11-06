@@ -76,8 +76,9 @@ TEST_F(PosixMQTest, MQSendReceive ) {
     std::unique_ptr<mq> mqd_recv = std::make_unique<mq>(_mq_name);
     std::unique_ptr<mq> mqd_send = std::make_unique<mq>(_mq_name, nullptr, O_RDWR);
     auto hello = "Hello";
-    auto msg_size = strlen(hello);
-    EXPECT_EQ(msg_size, 5);
+    //auto msg_size = strlen(hello);
+    auto msg_size = sizeof(hello);
+    EXPECT_EQ(msg_size, 8);
     auto msg = std::make_shared<char[]>(msg_size);
     memcpy((void*) msg.get(), (void *) hello, msg_size);
 

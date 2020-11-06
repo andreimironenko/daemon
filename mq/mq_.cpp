@@ -2,6 +2,7 @@
 // Created by amironenko on 05/11/2020.
 //
 #include<sstream>
+#include<string>
 
 #include "mq.h"
 #include "mq_.h"
@@ -89,7 +90,9 @@ void mq::mq_::send(std::weak_ptr<char[]> msg, unsigned int priority) {
 
     if (0 != mq_send(_desc, msg_spt.get(),sizeof(msg_spt.get()), priority)) {
         std::stringstream ss;
-        ss << "Call of mq_send has failed";
+        ss << "Call of mq_send has failed,";
+        ss << "size = " << (const char*)sizeof(msg_spt.get()) << "bytes, ";
+        ss << "message: " << msg_spt.get();
         throw std::runtime_error(ss.str());
     }
 }
@@ -113,10 +116,13 @@ ssize_t mq::mq_::receive(std::weak_ptr<char[]> msg, std::weak_ptr<unsigned int> 
         throw std::runtime_error(ss.str());
     }
 
-    ret = mq_receive(_desc, msg_spt.get(),sizeof(msg_spt.get()), priority_spt.get());
+    //ret = mq_receive(_desc, msg_spt.get(), sizeof(msg_spt.get()) + 1, priority_spt.get());
+    ret = mq_receive(_desc, msg_spt.get(), 2048, priority_spt.get());
     if(-1 == ret) {
         std::stringstream ss;
-        ss << "Call of mq_send has failed";
+        ss << "Call of mq_receive has failed, ";
+        ss << "max message size: " << sizeof(msg_spt.get()) << ", ";
+        ss << "priority = " << *priority_spt;
         throw std::runtime_error(ss.str());
     }
     return ret;
