@@ -18,13 +18,22 @@ class mq {
     // Forward implementation class declaration
     class mq_;
 
-// PRIVATE INSTANCE VARIABLES
+
+    // PRIVATE INSTANCE VARIABLES
     // Implementation class pointer
     std::unique_ptr <mq_> _mq;
 
 public:
+    struct msg_t {
+        std::weak_ptr<char> ptr;
+        ssize_t size;
+        unsigned int priority;
+    };
+
     // Type declarations
-    using attr_ptr_t = std::unique_ptr<mq_attr>;
+    using attr_uqp_t = std::unique_ptr<mq_attr>;
+    using attr_shp_t = std::shared_ptr<mq_attr>;
+    using attr_wkp_t = std::weak_ptr<mq_attr>;
 
     // PUBLIC STATIC MEMBERS
 #if defined (MQ_MAX_MSG_COUNT)
@@ -39,8 +48,7 @@ public:
     static const long MAX_MSG_SIZE = 2048;
 #endif
 
-    static int unlink(const std::string &queue);
-
+    static int unlink(std::string queue);
 
     // PUBLIC INSTANCE MEMBERS
     /**!
@@ -56,32 +64,38 @@ public:
      * @param mq_curmsgs Number of messages currently in queue
     **/
 
-    //struct mq_attr attr = {0, MAX_MSG_COUNT, MAX_MSG_SIZE,0,}
-    mq(const std::string &name,
-                int oflag = O_CREAT | O_EXCL,
-                mode_t mode = 0700,
-                attr_ptr_t attr = std::unique_ptr<mq_attr>(new mq_attr{0, MAX_MSG_COUNT, MAX_MSG_SIZE, 0})
+    mq(
+            std::string name,
+            attr_wkp_t attr,
+            int oflag = O_CREAT | O_EXCL,
+            mode_t mode = 0700
+    );
+
+    mq(
+            std::string name,
+            attr_uqp_t attr = std::unique_ptr<mq_attr>(new mq_attr{0, MAX_MSG_COUNT, MAX_MSG_SIZE, 0}),
+            int oflag = O_CREAT | O_EXCL,
+            mode_t mode = 0700
     );
 
     ~mq();
 
     mq(mq &&) = delete;
 
-    mq(const mq &other);
+    mq(const mq &other) = delete;
 
     mq &operator=(mq &&) = delete;
 
     mq &operator=(const mq &rhs) = delete;
 
 
-    [[nodiscard]] attr_ptr_t get_attr() const;
+    [[nodiscard]] attr_uqp_t get_attr() const;
 
-    void set_attr(attr_ptr_t attr);
+    attr_uqp_t set_attr(attr_wkp_t attr);
 
-    void send(std::string_view msg, unsigned int priority = 0);
+    void send(msg_t msg);
+    void send(const std::string& msg, unsigned int priority=0);
+    msg_t  receive();
 
-    ssize_t receive(std::string_view &msg, unsigned int &priority);
-
-    // TODO: implement mq_teimedsend, mq_timedrecive and mq_notify
+    // TODO: implement mq_timedsend, mq_timedrecive and mq_notify
 };
-
