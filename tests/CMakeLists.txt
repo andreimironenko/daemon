@@ -1,5 +1,7 @@
 # adding the Google_Tests_run target
 
+include(FetchContent)
+
 # Download and unpack googletest at configure time
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
 execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
@@ -32,7 +34,18 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include")
 endif()
 
+FetchContent_Declare(json
+        GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+        GIT_TAG master)
+
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+    FetchContent_Populate(json)
+    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
+endif()
+
 # linking Google_Tests_run with DateConverter_lib which will be tested
 add_executable(tests PosixMQTest.cpp)
 target_link_libraries(tests mq rt)
 target_link_libraries(tests gtest gtest_main)
+target_link_libraries(tests nlohmann_json::nlohmann_json)

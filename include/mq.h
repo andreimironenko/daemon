@@ -25,7 +25,7 @@ class mq {
 
 public:
     struct msg_t {
-        std::weak_ptr<char []> ptr;
+        std::weak_ptr<char> ptr;
         ssize_t size;
         unsigned int priority;
     };
@@ -94,6 +94,7 @@ public:
     attr_uqp_t set_attr(attr_wkp_t attr);
 
     void send(msg_t msg);
+    void send(const std::string& msg, unsigned int priority=0);
     msg_t  receive();
 
     // TODO: implement mq_timedsend, mq_timedrecive and mq_notify

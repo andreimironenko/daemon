@@ -10,7 +10,7 @@ class mq::mq_{
     std::string _name;
     mqd_t _desc;
     ssize_t _recv_size;
-    std::shared_ptr<char[]> _recv_buffer;
+    std::shared_ptr<char> _recv_buffer;
 
 public:
     // PUBLIC INSTANCE MEMBERS
@@ -26,6 +26,7 @@ public:
     attr_uqp_t set_attr(attr_wkp_t attr_ptr);
 
     void send(msg_t msg);
+    void send(const std::string& msg, unsigned int priority=0);
     mq::msg_t  receive();
 };
 

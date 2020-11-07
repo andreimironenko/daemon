@@ -3,6 +3,7 @@
 //
 #include<sstream>
 #include<string>
+#include<iostream> // TODO: Remove!
 
 #include "mq.h"
 #include "mq_.h"
@@ -11,7 +12,7 @@ mq::mq_::mq_(std::string name, attr_uqp_t attr, int oflag, mode_t mode) :
         _name(name),
         _desc(mq_open(_name.c_str(), oflag, mode , attr.get())),
         _recv_size(attr ? attr->mq_msgsize : mq::MAX_MSG_SIZE),
-        _recv_buffer(std::make_shared<char[]>(_recv_size))
+        _recv_buffer(std::shared_ptr<char>((char*)calloc(sizeof(char), _recv_size), free))
 {
     if (_desc == static_cast<mqd_t>(-1))
     {
@@ -39,7 +40,7 @@ mq::mq_::mq_(std::string name, attr_wkp_t attr, int oflag, mode_t mode) :
         throw std::runtime_error(ss.str());
     }
     _recv_size = sp ? sp->mq_msgsize : mq::MAX_MSG_SIZE;
-    _recv_buffer = std::make_shared<char[]>(_recv_size);
+    _recv_buffer = std::shared_ptr<char>((char*)calloc(sizeof(char), _recv_size), free);
 }
 
 
@@ -91,6 +92,7 @@ void mq::mq_::send(msg_t msg) {
         throw std::runtime_error(ss.str());
     }
 
+
     if (int ret = mq_send(_desc, buff.get(), msg.size, msg.priority); ret != 0) {
         std::stringstream ss;
         ss << "Call of mq_send has failed,";
@@ -100,9 +102,21 @@ void mq::mq_::send(msg_t msg) {
     }
 }
 
+void mq::mq_::send(const std::string& msg, unsigned int priority) {
+
+    if (int ret = mq_send(_desc, msg.c_str(), msg.size(), priority); ret != 0) {
+        std::stringstream ss;
+        ss << "Call of mq_send has failed,";
+        ss << "size = " << msg.size() << "bytes, ";
+        ss << "message: " << msg;
+        throw std::runtime_error(ss.str());
+    }
+}
+
 
 mq::msg_t mq::mq_::receive() {
-    mq::msg_t msg{_recv_buffer, 0, 0};
+    mq:msg_t msg;
+    msg.ptr = _recv_buffer;
 
     msg.size = mq_receive(_desc, _recv_buffer.get(), _recv_size, &msg.priority);
     if(-1 == msg.size) {
@@ -112,6 +126,5 @@ mq::msg_t mq::mq_::receive() {
         ss << "priority = " << msg.priority;
         throw std::runtime_error(ss.str());
     }
-
     return msg;
 }

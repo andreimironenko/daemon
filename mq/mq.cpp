@@ -31,6 +31,10 @@ void mq::send(msg_t msg) {
     _mq->send(std::move(msg));
 }
 
+void mq::send(const std::string &msg, unsigned int priority) {
+    _mq->send(msg, priority);
+}
+
 mq::msg_t  mq::receive() {
     return _mq->receive();
 }
@@ -38,4 +42,5 @@ mq::msg_t  mq::receive() {
 int mq::unlink(std::string queue) {
     return mq_unlink(queue.c_str());
 }
+
 
