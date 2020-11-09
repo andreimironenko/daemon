@@ -2,10 +2,16 @@
 // Created by amironenko on 31/10/2020.
 //
 
+// Local headers
 #include "../include/daemon.h"
+
+// STL C++ headers
 #include <iostream>
 #include <sstream>
 #include <array>
+
+// Boost headers
+#include <boost/program_options.hpp>
 
 // Linux headers
 #include <mqueue.h>
@@ -15,81 +21,67 @@ using std::cout;
 using std::endl;
 using std::stringstream;
 
-namespace daemon
+namespace po = boost::program_options;
+
+//namespace daemon
+//{
+class core::core_ {
+  std::string _name;
+
+  int parse_cli_options(int argc, char** argv);
+
+  public:
+  explicit core_(std::string name, int argc, char** argv);
+  virtual ~core_() = default;
+
+};
+
+core::core(std::string name, int argc, char** argv):
+  _core(std::make_unique<core_>(name, argc, argv))
 {
-    class core::core_ {
+}
 
-        // STATIC PRIVATE VARIABLES
-#if defined (DAEMON_MQ_MAX_MSG_COUNT)
-        static const long MQ_MAX_MSG_COUNT = DAEMON_MQ_MAX_MSG_COUNT;
-#else
-        static const long MQ_MAX_MSG_COUNT= 100;
-#endif
-
-#if defined (DAEMON_MQ_MAX_MSG_SIZE)
-        static const long MQ_MAX_MSG_SIZE = DAEMON_MQ_MAX_MSG_SIZE;
-#else
-        static const long MQ_MAX_MSG_SIZE = 2048;
-#endif
-
-        static const int MQ_FLAGS = O_CREAT | O_EXCL;
-        static const mode_t MQ_PERMS = 0700;
+core::~core() {}
 
 
+core::core_::core_(std::string name, int argc, char** argv) :
+  _name(name)
+{
+  std::cout << "start daemon " << _name << endl;
 
-       // PRIVATE INSTANCE VARIABLES
-        std::string _name; //daemon process name or maybe file name argv[0]?
-        std::string _mq_name;
-        struct mq_attr _mq_attr;
-        mqd_t _mq_desc;
-        std::array<char, MQ_MAX_MSG_SIZE> _mq_buffer = {};
-        int _stop_flag = 0;
+  std::cout << "argc = " << argc << endl;
+  std::cout << "argv : " << argv << endl;
+}
 
-    public:
-        explicit core_(std::string name);
-        virtual ~core_() = default;
+int core::core_::parse_cli_options(int argc, char** argv)
+{
+  // Declare the supported options.
+  po::options_description desc("Allowed options");
+  desc.add_options()
+    ("help", "produce help message")
+    ("compression", po::value<int>(), "set compression level")
+    ;
 
-        void start();
-        void stop();
-        void restart();
-        std::string status();
-    };
+  po::variables_map vm;
+  po::store(po::parse_command_line(argc, argv, desc), vm);
+  po::notify(vm);    
 
+  if (vm.count("help")) {
+    cout << desc << "\n";
+    return 0;
+  }
 
+  if (vm.count("compression")) {
+    cout << "Compression level was set to " 
+      << vm["compression"].as<int>() << ".\n";
+    return 0;
+  } else {
+    cout << "Compression level was not set.\n";
+    return -1;
+  }
 
-    core::core_::core_(std::string name) :
-            _name(name),
-            _mq_name("/mq_" + _name),
-            _mq_attr{MQ_FLAGS, MQ_MAX_MSG_COUNT, MQ_MAX_MSG_SIZE,0},
-            _mq_desc(mq_open(_mq_name.c_str(), MQ_FLAGS, MQ_PERMS,&_mq_attr))
-    {
-        if (_mq_desc == static_cast<mqd_t>(-1))
-        {
-            stringstream ss;
-            ss << "Creation of ";
-            ss << _name;
-            ss << " daemon's message queue has failed";
+  return -1;
+}
 
-            throw std::runtime_error(ss.str());
-        }
-        start();
-    }
-
-    void core::core_::start() {
-        cout << "daemon started" << endl;
-        while(!_stop_flag) {
-           auto nm_read = mq_receive(_mq_desc, _mq_buffer.data(), MQ_MAX_MSG_SIZE, 0);
-
-        }
-    }
-    void core::core_::stop() {cout << "daemon stopped" << endl;}
-    void core::core_::restart() {cout << "daemon restarted" << endl;}
-    std::string core::core_::status() { return std::string("");}
-
-    core::core(std::string name) : _impl(std::make_unique<core_>(name)) {}
-    void core::start() {_impl->start();}
-    void core::stop() {_impl->stop();}
-    void core::restart() {_impl->restart();}
-    std::string core::status() {return _impl->status();}
-} // namespace daemon
+//} // namespace daemon
 

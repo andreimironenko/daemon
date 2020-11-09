@@ -10,6 +10,8 @@ add_library(daemon-client SHARED client/client.cpp include/client.h)
 add_library(daemon STATIC core/core.cpp include/daemon.h)
 add_library(mq STATIC mq/mq.cpp include/mq.h mq/mq_.h mq/mq_.cpp)
 
+target_link_libraries(daemon boost_program_options)
+
 add_subdirectory(tests)
 
 
