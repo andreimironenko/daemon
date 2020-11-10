@@ -3,14 +3,7 @@
 //
 /**!
  * The Linux/Unix daemon baseclass
- *
- *
- * // Command lines:
- * --work-directory
- * --keep-open-file-descriptors
- * --keep-std-streams
- * --no-umask-update
- * --max-file-descriptor (to close. default 8192)
+
  */
 
 #pragma once

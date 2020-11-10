@@ -18,12 +18,7 @@ class DaemonTest: public ::testing::Test {
       : _mq_name("deamon-test")
     {
       // initialization;
-        char* args[3];
-        args[0] = const_cast<char*>("deamon");
-        args[1] = const_cast<char*>("--compression");
-        args[2] = const_cast<char*>("10");
 
-       _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
     }
 
     void SetUp( ) override {
@@ -44,9 +39,32 @@ class DaemonTest: public ::testing::Test {
 };
 
 // Creating exclusive message queue with default flags which O_CREAT|O_EXCL
-TEST_F(DaemonTest, CliParsing ) {
+TEST_F(DaemonTest, CliParsing1 ) {
   EXPECT_TRUE(true == true);
-
+    char* args[] = {
+            const_cast<char*>("deamon"),
+            const_cast<char*>("--config-file"),
+            const_cast<char*>("/home/amironenko/tmp/daemon.cfg"),
+    };
+    _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
 }
 
+TEST_F(DaemonTest, CliParsing2 ) {
+    EXPECT_TRUE(true == true);
+    char* args[] = {
+            const_cast<char*>("deamon"),
+            const_cast<char*>("--config-file"),
+            const_cast<char*>("/home/amironenko/tmp/daemon2.cfg"),
+    };
+    _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
+}
+
+TEST_F(DaemonTest, CliParsingHelp ) {
+    EXPECT_TRUE(true == true);
+    char* args[] = {
+            const_cast<char*>("deamon"),
+            const_cast<char*>("--help"),
+    };
+    _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
+}
 
