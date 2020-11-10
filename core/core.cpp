@@ -9,13 +9,12 @@
 #include <iostream>
 #include <sstream>
 #include <array>
+#include <memory>
 
 // Boost headers
 #include <boost/program_options.hpp>
 
 // Linux headers
-#include <mqueue.h>
-#include <fcntl.h>
 
 using std::cout;
 using std::endl;
@@ -51,6 +50,8 @@ core::core_::core_(std::string name, int argc, char** argv) :
 
   std::cout << "argc = " << argc << endl;
   std::cout << "argv : " << argv << endl;
+
+  parse_cli_options(argc, argv);
 }
 
 int core::core_::parse_cli_options(int argc, char** argv)

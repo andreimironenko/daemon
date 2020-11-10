@@ -9,6 +9,7 @@
 class DaemonTest: public ::testing::Test {
   protected:
     std::string _mq_name;
+    std::unique_ptr<core> _dm;
 
   public:
 
@@ -17,6 +18,12 @@ class DaemonTest: public ::testing::Test {
       : _mq_name("deamon-test")
     {
       // initialization;
+        char* args[3];
+        args[0] = const_cast<char*>("deamon");
+        args[1] = const_cast<char*>("--compression");
+        args[2] = const_cast<char*>("10");
+
+       _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
     }
 
     void SetUp( ) override {
@@ -39,12 +46,6 @@ class DaemonTest: public ::testing::Test {
 // Creating exclusive message queue with default flags which O_CREAT|O_EXCL
 TEST_F(DaemonTest, CliParsing ) {
   EXPECT_TRUE(true == true);
-  char* args[3];
-  args[0] = const_cast<char*>("deamon");
-  args[1] = const_cast<char*>("--compression");
-  args[2] = const_cast<char*>("10");
-  
-  auto dm = std::unique_ptr<core>(new core(args[0], 3, args));
 
 }
 

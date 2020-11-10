@@ -51,12 +51,11 @@ endif()
 #include_directories(${Boost_INCLUDE_DIR})
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
-add_executable(tests PosixMQTest.cpp daemon-test.cpp)
+add_executable(tests PosixMQTest.cpp)
 target_link_libraries(tests mq rt)
 target_link_libraries(tests gtest gtest_main)
 target_link_libraries(tests nlohmann_json::nlohmann_json)
 
 add_executable(daemon-test daemon-test.cpp)
-target_link_libraries(daemon-test mq daemon rt boost_program_options)
+target_link_libraries(daemon-test daemon)
 target_link_libraries(daemon-test gtest gtest_main)
-target_link_libraries(daemon-test nlohmann_json::nlohmann_json)
