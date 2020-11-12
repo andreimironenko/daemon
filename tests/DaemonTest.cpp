@@ -92,7 +92,5 @@ TEST_F(DaemonTest, CliParsingHelp ) {
 #endif
     const char* expected ="Allowed options:\n  --help                 This help\n  --work-directory arg  set daemon's working directory\n  --config-file arg     full path to configuration file\n\n";
     ASSERT_STREQ(output.c_str(), expected);
-
-
 }
 
