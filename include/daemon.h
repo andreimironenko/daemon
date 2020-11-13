@@ -20,20 +20,20 @@ namespace fs = std::filesystem;
 
 //namespace daemon {
 // Forward declarations;
-class core {
+class daemon_base {
 
-    class core_;
-    std::unique_ptr<core_> _core;
+    class daemon_base_;
+    std::unique_ptr<daemon_base_>_daemon_base;
 
 public:
-    explicit core(std::string name, int argc, char** argv);
+    explicit daemon_base(std::string name, int argc, char** argv);
 
-    virtual ~core();
+    virtual ~daemon_base();
 
-    core(core&&) = delete;
-    core(const core&) = delete;
-    core& operator=(core&&) = delete;
-    core& operator=(const core&) = delete;
+    daemon_base(daemon_base&&) = delete;
+    daemon_base(const daemon_base&) = delete;
+    daemon_base& operator=(daemon_base&&) = delete;
+    daemon_base& operator=(const daemon_base&) = delete;
 
     fs::path work_directory();
     fs::path config_file();

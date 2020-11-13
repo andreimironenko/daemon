@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 class DaemonTest: public ::testing::Test {
   protected:
     std::string _mq_name;
-    std::unique_ptr<core> _dm;
+    std::unique_ptr<daemon_base> _dm;
 
   public:
 
@@ -70,7 +70,7 @@ TEST_F(DaemonTest, CliParsing2 ) {
             const_cast<char *>(cfg_path.c_str())
     };
 
-    _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
+    _dm = std::make_unique<daemon_base>(args[0], 3, static_cast<char**>(args));
     const char* expected = "/";
     ASSERT_STREQ(_dm->work_directory().c_str(), expected);
 }
@@ -82,7 +82,7 @@ TEST_F(DaemonTest, CliParsingHelp ) {
             const_cast<char*>("--help"),
     };
     testing::internal::CaptureStdout();
-    _dm = std::make_unique<core>(args[0], 3, static_cast<char**>(args));
+    _dm = std::make_unique<daemon_base>(args[0], 3, static_cast<char**>(args));
     std::string output = testing::internal::GetCapturedStdout();
 #if 0
     const char* expected = "Allowed options:"
