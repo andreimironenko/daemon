@@ -2,6 +2,8 @@
 // Created by amironenko on 13/11/2020.
 //
 #pragma once
+// Local headers
+#include <mq.h>
 
 // Boost headers
 #include <boost/program_options.hpp>
@@ -32,6 +34,7 @@ protected:
     int _log_level;
 
     std::map<int, signal_handler_t> _signals;
+    std::unique_ptr<mq> _mq;
 
 
 #if 0
@@ -50,6 +53,7 @@ public:
     void set_work_directory(const fs::path& work_directory);
     fs::path config_file();
     void set_config_file(const fs::path& config_file);
+
     int start_daemon();
     void set_log_level(int level);
     int log_level();

@@ -4,7 +4,7 @@
 
 // Local headers
 #include "daemon.h"
-#include "daemon-base_.h"
+#include "daemon_base_.h"
 
 // STL C++ headers
 #include <memory>

@@ -6,11 +6,12 @@ set(BUILD_SHARED_LIBS YES)
 
 include_directories(include)
 
-add_library(daemon-client SHARED client/client.cpp include/client.h)
-add_library(daemon STATIC src/daemon-base.cpp include/daemon.h src/daemon-base_.cpp src/daemon-base_.h)
 add_library(mq STATIC mq/mq.cpp include/mq.h mq/mq_.h mq/mq_.cpp)
+add_library(daemon STATIC src/daemon_base.cpp include/daemon.h src/daemon_base_.cpp src/daemon_base_.h)
+add_library(daemon-cli STATIC src/daemon_cli.cpp include/daemon_cli.h src/daemon_cli_.cpp src/daemon_cli_.h)
 
-target_link_libraries(daemon boost_program_options)
+target_link_libraries(daemon mq boost_program_options)
+target_link_libraries(daemon-cli mq nlohmann_json)
 
 add_subdirectory(tests)
 add_subdirectory(examples)

@@ -4,18 +4,13 @@
 
 // Local headers
 #include "daemon.h"
-#include "daemon-base_.h"
+#include "daemon_base_.h"
 
 // STL C++ headers
 #include <iostream>
-#include <sstream>
 #include <array>
-#include <memory>
 #include <filesystem>
-#include <map>
 #include <csignal>
-#include <functional>
-#include <iostream>
 
 
 
@@ -27,6 +22,28 @@
 
 using std::stringstream;
 
+daemon_base::daemon_base_::daemon_base_(std::string name, int argc, char** argv) :
+        _name(name),
+        _desc("Available options"),
+        _log_options(LOG_PID|LOG_CONS|LOG_NOWAIT),
+        _log_facility(LOG_LOCAL0),
+        _log_level(LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ALERT) | LOG_MASK(LOG_CRIT) | LOG_MASK(LOG_ERR)),
+        _mq(std::make_unique<mq>(_name))
+{
+    parse_cli_options(argc, argv);
+
+    // syslog initialsiation
+    openlog(_name.c_str(), _log_options, _log_facility);
+
+    // set sginal handlers
+    if (!_signals.empty())
+    {
+        for (auto& [sig, handler] : _signals)
+        {
+            (void) std::signal(sig, handler);
+        }
+    }
+}
 
 int daemon_base::daemon_base_::parse_cli_options(int argc, char** argv)
 {
@@ -162,31 +179,16 @@ int daemon_base::daemon_base_::start_daemon()
     while(true)
     {
         syslog(LOG_INFO, "I'm still alive, my PID = %ld", (long)getpid());
-        sleep(5);
+        auto[received_msg, received_bytes, priority] = _mq->receive();
+        syslog(LOG_INFO, "number of bytes: %ld", received_bytes);
+        syslog(LOG_INFO, "priority: %d", priority);
+        if(auto sp = received_msg.lock(); sp) {
+            auto msg = std::string(static_cast<const char *>(sp.get()), received_bytes);
+            syslog(LOG_INFO, "%s", msg.c_str());
+        }
     }
 
     return 0;
-}
-daemon_base::daemon_base_::daemon_base_(std::string name, int argc, char** argv) :
-        _name(name),
-        _desc("Available options"),
-        _log_options(LOG_PID|LOG_CONS|LOG_NOWAIT),
-        _log_facility(LOG_LOCAL0),
-        _log_level(LOG_MASK(LOG_EMERG) | LOG_MASK(LOG_ALERT) | LOG_MASK(LOG_CRIT) | LOG_MASK(LOG_ERR))
-{
-    parse_cli_options(argc, argv);
-
-    // syslog initialsiation
-    openlog(_name.c_str(), _log_options, _log_facility);
-
-    // set sginal handlers
-    if (!_signals.empty())
-    {
-        for (auto& [sig, handler] : _signals)
-        {
-            (void) std::signal(sig, handler);
-        }
-    }
 }
 
 void daemon_base::daemon_base_::set_signal_handler(int sig, signal_handler_t handler)

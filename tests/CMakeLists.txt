@@ -60,5 +60,5 @@ target_link_libraries(PosixMQTest gtest gtest_main)
 target_link_libraries(PosixMQTest nlohmann_json::nlohmann_json)
 
 add_executable(DaemonTest DaemonTest.cpp)
-target_link_libraries(DaemonTest daemon)
+target_link_libraries(DaemonTest daemon mq rt)
 target_link_libraries(DaemonTest gtest gtest_main)

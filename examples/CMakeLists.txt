@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 
 # linking Google_Tests_run with DateConverter_lib which will be tested
-add_executable(daemon-test daemon-test.cpp)
-target_link_libraries(daemon-test daemon rt)
+add_executable(simple-daemon simple_daemon.cpp)
+target_link_libraries(simple-daemon daemon mq rt)
 
+add_executable(simple-daemon-cli simple_daemon_cli.cpp)
+#target_link_libraries(simple-daemon-cli daemon_cli)
