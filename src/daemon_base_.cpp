@@ -179,9 +179,11 @@ int daemon_base::daemon_base_::start_daemon()
     while(true)
     {
         syslog(LOG_INFO, "I'm still alive, my PID = %ld", (long)getpid());
+        
         auto[received_msg, received_bytes, priority] = _mq->receive();
         syslog(LOG_INFO, "number of bytes: %ld", received_bytes);
         syslog(LOG_INFO, "priority: %d", priority);
+       
         if(auto sp = received_msg.lock(); sp) {
             auto msg = std::string(static_cast<const char *>(sp.get()), received_bytes);
             syslog(LOG_INFO, "%s", msg.c_str());

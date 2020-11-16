@@ -22,8 +22,6 @@ public:
     daemon_cli& operator=(const daemon_cli&) = delete;
 
 
-    template <typename S, typename R>
-    std::unique_ptr<R> send(const S& msg);
-
+    template <typename S> void send(const S& msg);
 };
 

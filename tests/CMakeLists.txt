@@ -1,6 +1,5 @@
 # adding the Google_Tests_run target
 
-include(FetchContent)
 
 include_directories(../include)
 
@@ -39,15 +38,15 @@ if (CMAKE_VERSION VERSION_LESS 2.8.11)
     include_directories("${gtest_SOURCE_DIR}/include")
 endif()
 
-FetchContent_Declare(json
-        GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
-        GIT_TAG master)
+#FetchContent_Declare(json
+#        GIT_REPOSITORY https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+#        GIT_TAG master)
 
-FetchContent_GetProperties(json)
-if(NOT json_POPULATED)
-    FetchContent_Populate(json)
-    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
-endif()
+#FetchContent_GetProperties(json)
+#if(NOT json_POPULATED)
+#    FetchContent_Populate(json)
+#    add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR})
+#endif()
 
 # Boost library
 #find_package(Boost COMPONENTS system filesystem REQUIRED)

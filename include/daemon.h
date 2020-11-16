@@ -35,11 +35,16 @@ public:
     daemon_base& operator=(daemon_base&&) = delete;
     daemon_base& operator=(const daemon_base&) = delete;
 
-    fs::path work_directory();
-    fs::path config_file();
-    int start_daemon();
+    fs::path work_directory() const;
+    void set_work_directory(const fs::path& wd);
+
+    fs::path config_file() const;
+    void set_config_file(const fs::path cf);
+
+    int log_level() const;
     void set_log_level(int level);
-    int log_level();
+
+    virtual int start_daemon();
 };
 //} //namespace daemon
 

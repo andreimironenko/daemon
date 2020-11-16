@@ -41,10 +41,6 @@ namespace ns {
         j.at("address").get_to(p.address);
         j.at("age").get_to(p.age);
     }
-
-
-
-
 } //namespace ns
 
 class PosixMQTest: public ::testing::Test {
